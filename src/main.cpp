@@ -7,15 +7,16 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
 const char *vertexShaderSource = "#version 330 core\n"
-                                 "layout (location = 0) in vec3 aPos;\n"
+                                 "layout (location = 0) in vec3 position;\n"
                                  "void main() {\n"
-                                 "      gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+                                 "      gl_Position = vec4(position, 1.0);"
                                  "}\0";
 
 const char *fragmentShaderSource = "#version 330 core\n"
                                    "out vec4 color;\n"
+                                   "uniform vec4 ourColor;"
                                    "void main() {\n"
-                                   "    color = vec4(0.0f, 0.0f, 1.0f, 1.0f);\n"
+                                   "    color = ourColor;\n"
                                    "}\0";
 
 int main()
@@ -28,7 +29,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required for macOS
 
     // Create window variable
-    GLFWwindow* window = glfwCreateWindow(800, 600, "First Rectangle!", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Fun with shaders!", nullptr, nullptr);
 
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window." << std::endl;
@@ -97,52 +98,47 @@ int main()
 
     // Set up vertex data and buffers
     GLfloat vertices[] = {
-     0.5f,  0.5f, 0.0f,     // Prawy górny
-     0.5f, -0.5f, 0.0f,     // Prawy dolny
-    -0.5f, -0.5f, 0.0f,     // Lewy dolny
-    -0.5f,  0.5f, 0.0f     // Lewy górny
+    -0.5f,  -0.5f, 0.0f,     // Bottom left
+     0.5f, -0.5f, 0.0f,      // Bottom right
+     0.0f, 0.5f, 0.0f,       // Top
     };
 
-    GLuint indices[] = {
-    0, 1, 3,        // Pierwszy trójkąt
-    1, 2, 3         // Drugi trójkąt
-    };
-
-    GLuint VBO, VAO, EBO;
+    GLuint VBO, VAO;
     glGenBuffers(1, &VBO);
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) nullptr);
     glEnableVertexAttribArray(0);
 
+    glBindVertexArray(VAO);
     // Game loop - update buffers to create shapes and animations
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
-        glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-        glBindVertexArray(0);
 
-        glfwPollEvents();
+        double timeValue = glfwGetTime();
+        float greenValue = (sin(timeValue)) + 0.5f;
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
 
     // Terminate all resources used to create window
