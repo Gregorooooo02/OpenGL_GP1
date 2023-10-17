@@ -1,11 +1,14 @@
 #version 330 core
-layout (location = 0) in vec3 position; // zmienna position ma lokalizację 0
-layout (location = 1) in vec3 color; // zmienna color ma lokalizację 1
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 color;
+layout (location = 2) in vec2 aTexCoord;
 
-out vec3 ourColor; // przekaż kolor do FS
+out vec3 ourColor;
+out vec2 TexCoord;
 
 void main()
 {
-    gl_Position = vec4(position, 1.0);
-    ourColor = color; // ustaw ourColor na kolor wejściowy z atrybutu wierzchołka
+	gl_Position = vec4(position, 1.0);
+	ourColor = color;
+	TexCoord = vec2(aTexCoord.x, aTexCoord.y);
 }
