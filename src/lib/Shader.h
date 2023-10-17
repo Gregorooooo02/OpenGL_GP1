@@ -1,7 +1,7 @@
 #ifndef OPENGLGP_SHADER_H
 #define OPENGLGP_SHADER_H
 
-#include <glad/glad.h>
+#include "glad/glad.h"
 
 #include <string>
 #include <fstream>
