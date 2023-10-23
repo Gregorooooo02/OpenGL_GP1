@@ -12,8 +12,8 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
 // Settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 800;
 
 int main()
 {
@@ -97,23 +97,14 @@ int main()
         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
-    GLint indices[] = {
-            0, 1, 3,    // First triangle
-            1, 2, 3     // Second triangle
-    };
-
-    GLuint VBO, VAO, EBO;
+    GLuint VBO, VAO;
     glGenBuffers(1, &VBO);
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) nullptr);
@@ -187,23 +178,18 @@ int main()
         shader.use();
 
         // Create transformations
-        glm::mat4 model         = glm::mat4(1.0f);      // Make sure to initialize matrix to identity matrix firsty
+        glm::mat4 model         = glm::mat4(1.0f);      // Make sure to initialize matrix to identity matrix first
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
-        model       = glm::rotate(model,
-                                  (float)glfwGetTime() * glm::radians(-55.0f),
-                                  glm::vec3(.5f, 1.0f, 0.0f));
-        view        = glm::translate(view,
-                                     glm::vec3(0.0f, 0.0f, -3.0f));
-        projection  = glm::perspective(glm::radians(45.0f),
-                                       (float)SCR_WIDTH / (float)SCR_HEIGHT,
-                                       0.1f,
-                                       100.0f);
 
         // Retrieve the matrix uniform locations
         GLint modelLoc = glGetUniformLocation(shader.ID, "model");
         GLint viewLoc = glGetUniformLocation(shader.ID, "view");
         GLint projectionLoc = glGetUniformLocation(shader.ID, "projection");
+
+        model = glm::rotate(model, glm::radians(20.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(70.0f), float(SCR_WIDTH) / float(SCR_HEIGHT), 0.1f, 100.0f);
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -220,7 +206,6 @@ int main()
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
 
     // Terminate all resources used to create window
     glfwTerminate();
