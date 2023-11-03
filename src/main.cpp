@@ -53,6 +53,7 @@ int main()
         return -1;
     }
 
+    // Init ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -60,7 +61,30 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    ImGui::StyleColorsDark();
+    // Change style of the ImGui
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    // Change sliders and buttons appearance
+    style.Colors[ImGuiCol_SliderGrab] = ImVec4(.75f, .0f, 1.0f, .6f);
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(.75f, .0f, 1.0f, .6f);
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(.05f, .0f, .25f, .5f);
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(.4f, .0f, .8f, .6f);
+    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(.4f, .0f, .8f, 1.0f);
+
+    // Change window appearance
+    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(.5f, .0f, 1.0f, 1.0f);
+    style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(.05f, .0f, .2f, .4f);
+    style.Colors[ImGuiCol_Border] = ImVec4(.5f, .0f, 1.0f, 1.0f);
+    style.Colors[ImGuiCol_WindowBg] = ImVec4(.05f, .0f, .2f, .4f);
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(.8f, .0f, 1.0f, 1.0f);
+    style.Colors[ImGuiCol_ButtonActive] = ImVec4(.8f, .0f, 1.0f, 1.0f);
+
+    // Change resize grip appearance
+    style.Colors[ImGuiCol_ResizeGrip] = ImVec4(.1f, .0f, .3f, .4f);
+    style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(.4f, .0f, .65f, .7f);
+    style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(.5f, .0f, 1.0f, 1.0f);
+
+    //ImGui::StyleColorsDark();
 
     ImVec4 cubeColor = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 
@@ -148,7 +172,7 @@ int main()
 
     // Load image, create texture and create mipmaps
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("res/textures/stone.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("res/textures/rainbow.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -185,8 +209,8 @@ int main()
     shader.setInt("texture2", 1);
 
     int recursionLevel = 0;
-    float rotationX = 0;
-    float rotationY = 0;
+    float rotationX = 0.0f;
+    float rotationY = 0.0f;
     float zoomLevel = -3.0f;
 
     // Create transformations
@@ -207,7 +231,7 @@ int main()
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.875f, 0.8f, 0.99f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Start the Dear ImGui frame
@@ -222,7 +246,6 @@ int main()
             ImGui::SliderFloat("Zoom Level", &zoomLevel, -6, 0);
             ImGui::SliderInt("Recursion Level", &recursionLevel, 0, 4);
             ImGui::ColorEdit3("Cube Color", (float*)&cubeColor);
-
             ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
