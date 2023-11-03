@@ -10,6 +10,6 @@ uniform vec4 color;
 
 void main()
 {
-	// linearly interpolate between both textures (80% container, 20% awesomeface)
-	FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.4) * color;
+	// linearly interpolate between both textures (40% stone, 60% okey)
+	FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.6) * color;
 }
