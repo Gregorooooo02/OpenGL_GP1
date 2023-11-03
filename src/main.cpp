@@ -8,8 +8,16 @@
 #include <iostream>
 #include "lib/Shader.h"
 
+#include "imgui.h"
+#include "imgui_impl/imgui_impl_glfw.h"
+#include "imgui_impl/imgui_impl_opengl3.h"
+
+#define IMGUI_IMPL_OPENGL_LOADER_GLAD
+
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+
+void drawMenger(float _x, float _y, float _z, int depth, float size, int modelLoc, float rotationX, float rotationY);
 
 // Settings
 const unsigned int SCR_WIDTH = 1200;
@@ -27,7 +35,7 @@ int main()
 #endif
 
     // Create window variable
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Begin of 3D", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "GP_1", nullptr, nullptr);
 
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window." << std::endl;
@@ -44,6 +52,19 @@ int main()
         std::cout << "Failed to initialize GLAD." << std::endl;
         return -1;
     }
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
+    ImGui::StyleColorsDark();
+
+    ImVec4 drawingColor = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+
+    bool toolWindow = true;
 
     // Configure global OpenGL state
     glEnable(GL_DEPTH_TEST);
@@ -147,7 +168,9 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    // Flip the texture
     stbi_set_flip_vertically_on_load(true);
+
     data = stbi_load("res/textures/polish_cow.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -161,6 +184,24 @@ int main()
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
 
+    int recursionLevel = 0;
+    float rotationX = 0;
+    float rotationY = 0;
+    float zoomLevel = -3.0f;
+
+    // Create transformations
+    glm::mat4 model         = glm::mat4(1.0f);      // Make sure to initialize matrix to identity matrix first
+    glm::mat4 view          = glm::mat4(1.0f);
+    glm::mat4 projection    = glm::mat4(1.0f);
+
+    // Retrieve the matrix uniform locations
+    GLint modelLoc = glGetUniformLocation(shader.ID, "model");
+    GLint viewLoc = glGetUniformLocation(shader.ID, "view");
+    GLint projectionLoc = glGetUniformLocation(shader.ID, "projection");
+
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, zoomLevel));
+    projection = glm::perspective(glm::radians(45.0f), float(SCR_WIDTH) / float(SCR_HEIGHT), 0.1f, 100.0f);
+
     // Game loop - update buffers to create shapes and animations
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
@@ -168,47 +209,60 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        if (toolWindow) {
+            ImGui::Begin("Tools");
+            ImGui::SliderFloat("Rotation X", &rotationX, -180, 180);
+            ImGui::SliderFloat("Rotation Y", &rotationY, -180, 180);
+            ImGui::SliderFloat("Zoom Level", &zoomLevel, -6, 0);
+            ImGui::SliderInt("Recursion Level", &recursionLevel, 0, 4);
+            ImGui::ColorEdit3("Cube Color", (float*)&drawingColor);
+
+            ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        ImGui::Render();
+
         // Bind texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
+        
 
-        // Activate shader
-        shader.use();
+        view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, zoomLevel));
 
-        // Create transformations
-        glm::mat4 model         = glm::mat4(1.0f);      // Make sure to initialize matrix to identity matrix first
-        glm::mat4 view          = glm::mat4(1.0f);
-        glm::mat4 projection    = glm::mat4(1.0f);
-
-        // Retrieve the matrix uniform locations
-        GLint modelLoc = glGetUniformLocation(shader.ID, "model");
-        GLint viewLoc = glGetUniformLocation(shader.ID, "view");
-        GLint projectionLoc = glGetUniformLocation(shader.ID, "projection");
-
-        model = glm::rotate(model, glm::radians(20.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-        projection = glm::perspective(glm::radians(70.0f), float(SCR_WIDTH) / float(SCR_HEIGHT), 0.1f, 100.0f);
-
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-        // Render container
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        // Render Menger Sponge
+        drawMenger(0, 0, 0, recursionLevel, 1, modelLoc, rotationX, rotationY);
 
-        // Swap buffers and poll IO events
-        glfwSwapBuffers(window);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Swap context and buffer
         glfwPollEvents();
+        glfwMakeContextCurrent(window);
+        glfwSwapBuffers(window);
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 
     // Terminate all resources used to create window
+    glfwDestroyWindow(window);
     glfwTerminate();
+
     return 0;
 }
 
@@ -219,5 +273,40 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+}
+
+void drawMenger(float _x, float _y, float _z, int depth, float size, int modelLoc, float rotationX, float rotationY) {
+    if (depth == 0) {
+        glm::mat4 newModel = glm::mat4(1.0f);
+        newModel = glm::rotate(newModel, glm::radians(rotationX), glm::vec3(1.0f, 0.0f, 0.0f));
+        newModel = glm::rotate(newModel, glm::radians(rotationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        newModel = glm::scale(newModel, glm::vec3(size));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(newModel));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        return;
+    }
+
+    float offset = size / 3.0f;
+
+    for (int x = -1; x < 2; x++) {
+        for (int y = -1; y < 2; y++) {
+            for (int z = -1; z < 2; z++) {
+                int sum = abs(x) + abs(y) + abs(z);
+
+                if (depth == 1 && sum > 1) {
+                    glm::mat4 newModel = glm::mat4(1.0f);
+                    newModel = glm::rotate(newModel, glm::radians(rotationX), glm::vec3(1.0f, 0.0f, 0.0f));
+                    newModel = glm::rotate(newModel, glm::radians(rotationY), glm::vec3(0.0f, 1.0f, 0.0f));
+                    newModel = glm::translate(newModel, glm::vec3(_x + (float)x * offset, _y + (float)y * offset, _z + (float)z * offset));
+                    newModel = glm::scale(newModel, glm::vec3(offset));
+
+                    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(newModel));
+                    glDrawArrays(GL_TRIANGLES, 0, 36);
+                } else if (depth > 1 && sum > 1) {
+                    drawMenger(_x + (float)x * offset, _y + (float)y * offset, _z + (float)z * offset, depth - 1, offset, modelLoc, rotationX, rotationY);
+                }
+            }
+        }
     }
 }
