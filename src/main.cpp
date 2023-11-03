@@ -62,7 +62,7 @@ int main()
 
     ImGui::StyleColorsDark();
 
-    ImVec4 drawingColor = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    ImVec4 cubeColor = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 
     bool toolWindow = true;
 
@@ -198,6 +198,7 @@ int main()
     GLint modelLoc = glGetUniformLocation(shader.ID, "model");
     GLint viewLoc = glGetUniformLocation(shader.ID, "view");
     GLint projectionLoc = glGetUniformLocation(shader.ID, "projection");
+    GLint colorLoc = glGetUniformLocation(shader.ID, "color");
 
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, zoomLevel));
     projection = glm::perspective(glm::radians(45.0f), float(SCR_WIDTH) / float(SCR_HEIGHT), 0.1f, 100.0f);
@@ -220,7 +221,7 @@ int main()
             ImGui::SliderFloat("Rotation Y", &rotationY, -180, 180);
             ImGui::SliderFloat("Zoom Level", &zoomLevel, -6, 0);
             ImGui::SliderInt("Recursion Level", &recursionLevel, 0, 4);
-            ImGui::ColorEdit3("Cube Color", (float*)&drawingColor);
+            ImGui::ColorEdit3("Cube Color", (float*)&cubeColor);
 
             ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
@@ -233,7 +234,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-        
+        glUniform4f(colorLoc, cubeColor.x, cubeColor.y, cubeColor.z, cubeColor.w);
 
         view = glm::mat4(1.0f);
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, zoomLevel));
