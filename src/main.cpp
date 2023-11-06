@@ -12,8 +12,6 @@
 #include "imgui_impl/imgui_impl_glfw.h"
 #include "imgui_impl/imgui_impl_opengl3.h"
 
-#define IMGUI_IMPL_OPENGL_LOADER_GLAD
-
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
@@ -246,7 +244,7 @@ int main()
             ImGui::SliderFloat("Zoom Level", &zoomLevel, -6, 0);
             ImGui::SliderInt("Recursion Level", &recursionLevel, 0, 4);
             ImGui::ColorEdit3("Cube Color", (float*)&cubeColor);
-            ImGui::Text("Frametime: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::Text("Framerate: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
